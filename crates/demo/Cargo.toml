@@ -1,0 +1,7 @@
+[package]
+name = "picolibc-demo"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+picolibc.workspace = true
