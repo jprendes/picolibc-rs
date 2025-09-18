@@ -60,14 +60,11 @@ pub fn build(options: &[(&str, &str)]) -> Result<()> {
     meson.build(src_dir.to_string_lossy(), build_dir.to_string_lossy())?;
 
     // Add stub files
-    let stubs = &[
-        manifest_dir.join("stubs").join("clock.c"),
-        manifest_dir.join("stubs").join("start.c"),
-        manifest_dir.join("stubs").join("sbrk.c"),
-        manifest_dir.join("stubs").join("errno.c"),
-    ];
+    let stubs = glob::glob(&format!("{}/*.c", manifest_dir.join("stubs").display()))?
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()?;
 
-    for file in stubs {
+    for file in &stubs {
         println!("cargo:rerun-if-changed={}", file.display());
     }
 
