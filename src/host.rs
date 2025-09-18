@@ -1,18 +1,11 @@
 use core::ffi::*;
 use core::ptr::null_mut;
 
-pub use anyhow::Result;
+use crate::io::Errno;
 
 mod linux;
 
 pub use linux::LinuxHost;
-
-pub fn errno() -> &'static mut c_int {
-    unsafe extern "C" {
-        fn _get_errno_ptr() -> *mut c_int;
-    }
-    unsafe { _get_errno_ptr().as_mut().unwrap() }
-}
 
 pub fn get_host() -> &'static dyn Host {
     // This is not thread-safe, but it's ok because
@@ -42,14 +35,32 @@ pub enum Clock {
     Monotonic,
 }
 
+type Result<T> = core::result::Result<T, Errno>;
+
 pub trait Host {
-    fn read(&self, fd: c_int, buf: &mut [u8]) -> Result<usize>;
-    fn write(&self, fd: c_int, buf: &[u8]) -> Result<usize>;
-    fn lseek(&self, fd: c_int, offset: SeekFrom) -> Result<usize>;
-    fn close(&self, fd: c_int) -> Result<()>;
-    fn gettime(&self, clock: Clock) -> Result<Timespec>;
-    fn exit(&self, ec: c_int) -> !;
-    fn brk(&self, addr: *const ()) -> Result<*mut ()>;
+    #![allow(unused_variables)]
+
+    fn read(&self, fd: c_int, buf: &mut [u8]) -> Result<usize> {
+        Ok(0)
+    }
+    fn write(&self, fd: c_int, buf: &[u8]) -> Result<usize> {
+        Ok(buf.len())
+    }
+    fn lseek(&self, fd: c_int, offset: SeekFrom) -> Result<usize> {
+        Ok(0)
+    }
+    fn close(&self, fd: c_int) -> Result<()> {
+        Ok(())
+    }
+    fn gettime(&self, clock: Clock) -> Result<Timespec> {
+        Ok(Timespec { sec: 0, nsec: 0 })
+    }
+    fn exit(&self, ec: c_int) -> ! {
+        loop {}
+    }
+    fn brk(&self, addr: *const ()) -> Result<*mut ()> {
+        Ok(null_mut())
+    }
 }
 
 #[unsafe(no_mangle)]
@@ -57,9 +68,9 @@ pub extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> isize {
     let buf = unsafe { core::slice::from_raw_parts_mut(buf as *mut u8, count) };
 
     match get_host().read(fd, buf) {
-        Ok(n) => n as isize,
-        Err(_) => {
-            *errno() = picolibc_sys::EIO as _;
+        Ok(b) => b as isize,
+        Err(err) => {
+            err.set_errno();
             -1
         }
     }
@@ -70,9 +81,9 @@ pub extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> isize {
     let buf = unsafe { core::slice::from_raw_parts(buf as *const u8, count) };
 
     match get_host().write(fd, buf) {
-        Ok(n) => n as isize,
-        Err(_) => {
-            *errno() = picolibc_sys::EIO as _;
+        Ok(b) => b as isize,
+        Err(err) => {
+            err.set_errno();
             -1
         }
     }
@@ -93,7 +104,7 @@ pub extern "C" fn clock_gettime(
         picolibc_sys::CLOCK_REALTIME => Clock::Realtime,
         picolibc_sys::CLOCK_MONOTONIC => Clock::Monotonic,
         _ => {
-            *errno() = picolibc_sys::EINVAL as _;
+            Errno::EINVAL.set_errno();
             return -1;
         }
     };
@@ -104,8 +115,8 @@ pub extern "C" fn clock_gettime(
             ts.tv_nsec = t.nsec as _;
             0
         }
-        Err(_) => {
-            *errno() = picolibc_sys::EIO as _;
+        Err(err) => {
+            err.set_errno();
             -1
         }
     }
@@ -123,15 +134,15 @@ pub extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
         picolibc_sys::SEEK_CUR => SeekFrom::Current(offset),
         picolibc_sys::SEEK_END => SeekFrom::End(offset),
         _ => {
-            *errno() = picolibc_sys::EINVAL as _;
+            Errno::EINVAL.set_errno();
             return -1;
         }
     };
 
     match get_host().lseek(fd, offset) {
         Ok(n) => n as c_long,
-        Err(_) => {
-            *errno() = picolibc_sys::EIO as _;
+        Err(err) => {
+            err.set_errno();
             -1
         }
     }
@@ -141,8 +152,8 @@ pub extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
 pub extern "C" fn close(fd: c_int) -> c_int {
     match get_host().close(fd) {
         Ok(()) => 0,
-        Err(_) => {
-            *errno() = picolibc_sys::EIO as _;
+        Err(err) => {
+            err.set_errno();
             -1
         }
     }
@@ -150,5 +161,11 @@ pub extern "C" fn close(fd: c_int) -> c_int {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _brk(addr: *const ()) -> *mut () {
-    get_host().brk(addr).unwrap_or(null_mut())
+    match get_host().brk(addr) {
+        Ok(a) => a,
+        Err(err) => {
+            err.set_errno();
+            null_mut()
+        }
+    }
 }

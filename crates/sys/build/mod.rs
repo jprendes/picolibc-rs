@@ -25,7 +25,7 @@ pub fn build(options: &[(&str, &str)]) -> Result<()> {
     let install_dir = out_dir.join("usr");
     let include_dir = install_dir.join("include");
 
-    cc.out_dir(&build_dir);
+    cc.out_dir(&build_dir.join("obj"));
     cc.warnings_into_errors(true);
 
     println!("cargo:rerun-if-changed={}", src_dir.display());

@@ -1,5 +1,9 @@
 use core::ffi::c_int;
 
+mod errno;
+
+pub use errno::Errno;
+
 #[inline]
 fn write_bytes(fd: c_int, s: impl AsRef<[u8]>) -> core::fmt::Result {
     let mut msg = s.as_ref();

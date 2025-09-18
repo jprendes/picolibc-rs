@@ -1,7 +1,7 @@
 #include <errno.h>
 
-int *_get_errno_ptr(void);
+int* __picolibc_errno_location(void);
 
-int *_get_errno_ptr() {
+int* __picolibc_errno_location(void) {
     return &errno;
 }

@@ -58,14 +58,14 @@ impl ExitCode {
     /// Note that a `()`-returning `main` implicitly results in a successful
     /// termination, so there's no need to return this from `main` unless
     /// you're also returning other possible codes.
-    pub const SUCCESS: ExitCode = ExitCode(0);
+    pub const SUCCESS: ExitCode = ExitCode(picolibc_sys::EXIT_SUCCESS as _);
 
     /// The canonical `ExitCode` for unsuccessful termination on this platform.
     ///
     /// If you're only returning this and `SUCCESS` from `main`, consider
     /// instead returning `Err(_)` and `Ok(())` respectively, which will
     /// return the same codes (but will also `eprintln!` the error).
-    pub const FAILURE: ExitCode = ExitCode(1);
+    pub const FAILURE: ExitCode = ExitCode(picolibc_sys::EXIT_FAILURE as _);
 
     /// Exit the current process with the given `ExitCode`.
     ///
