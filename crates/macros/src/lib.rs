@@ -52,6 +52,7 @@ pub fn host(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #host_static
         const _: () = {
             extern crate picolibc;
+
             #[unsafe(no_mangle)]
             static __HOST: &'static dyn picolibc::host::Host = &#ident;
         };

@@ -149,14 +149,10 @@ impl Errno {
     }
 }
 
-unsafe extern "C" {
-    fn __picolibc_errno_location() -> *mut core::ffi::c_int;
-}
-
 fn set_errno(val: u32) {
-    unsafe { __picolibc_errno_location().write(val as _) };
+    unsafe { picolibc_sys::__errno_location().write(val as _) };
 }
 
 fn get_errno() -> u32 {
-    unsafe { __picolibc_errno_location().read() as _ }
+    unsafe { picolibc_sys::__errno_location().read() as _ }
 }

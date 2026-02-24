@@ -1,12 +1,9 @@
 //! Emulated Thread-Local Storage (TLS) implementation.
 //!
 //! This module provides emulated TLS support for environments where native TLS
-//! is not available. For every TLS variable `xyz`, there is one `EmutlsControl`
-//! variable named `__emutls_v.xyz`. If `xyz` has a non-zero initial value,
-//! the control's `value` field will point to `__emutls_t.xyz` with the initial value.
-//!
-//! This implementation is based on LLVM's compiler-rt emutls:
-//! https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/emutls.c
+//! is not available.
+//! For more details on the API for emutls see the LLVM implementation:
+//! https://github.com/llvm/llvm-project/blob/4814b9c93a13d0480f2839c2b8a049c4708e46d8/compiler-rt/lib/builtins/emutls.c
 
 use alloc::rc::Rc;
 use core::cell::RefCell;

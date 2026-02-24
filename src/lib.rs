@@ -10,6 +10,7 @@ pub mod io;
 mod panic;
 mod emutls;
 pub mod thread;
+mod stubs;
 
 pub use picolibc_macros::{host, main};
 #[doc(hidden)]

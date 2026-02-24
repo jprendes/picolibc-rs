@@ -26,13 +26,13 @@ impl Sandbox {
 
 fn assert_no_gpl(path: impl AsRef<str>) {
     let path = path.as_ref();
-    if path.contains("printf-tests.c") {
+    if path.contains("printf-tests") {
         panic!("File {path:?} should not be read during the build");
     }
-    if path.contains("testcases.c") {
+    if path.contains("testcases") {
         panic!("File {path:?} should not be read during the build");
     }
-    if path.contains("GeneratePicolibcCrossFile.sh") {
+    if path.contains("GeneratePicolibcCrossFile") {
         panic!("File {path:?} should not be read during the build");
     }
 }
@@ -66,6 +66,7 @@ impl runtime::Runtime for Sandbox {
     }
 
     fn is_file(&self, path: &OsPath) -> runtime::Result<bool> {
+        assert_no_gpl(path);
         Ok(Path::new(path.as_ref()).is_file())
     }
     fn is_dir(&self, path: &OsPath) -> runtime::Result<bool> {
