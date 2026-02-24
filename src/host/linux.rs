@@ -1,10 +1,14 @@
 use core::ffi::*;
 
-use linux_syscall::{SYS_brk, SYS_clock_gettime, SYS_exit, SYS_exit_group, SYS_read, SYS_write};
+use linux_syscall::{
+    SYS_clock_gettime, SYS_exit, SYS_exit_group, SYS_gettid, SYS_mmap, SYS_read, SYS_write,
+};
 
 use crate::io::Errno;
 
 use super::{Clock, Host, Result, Timespec};
+
+#[derive(Default)]
 pub struct LinuxHost;
 
 macro_rules! syscall {
@@ -58,9 +62,21 @@ impl Host for LinuxHost {
         }
     }
 
-    fn brk(&self, addr: *const ()) -> Result<*mut ()> {
-        let addr = syscall!(SYS_brk, addr)?;
-        Ok(addr as _)
+    fn mmap(&self, addr: *mut u8, size: usize) -> Result<&mut [u8]> {
+        let offset = 0; // offset in the file (if MAP_ANONYMOUS is not set)
+        let prot = 0x03 /* PROT_READ=0x01 | PROT_WRITE=0x02 */;
+        let flags = 0x22 /* MAP_PRIVATE=0x02 | MAP_ANONYMOUS=0x20 */;
+        let fd = -1; // because MAP_ANONYMOUS is set
+
+        let addr = syscall!(SYS_mmap, addr, size, prot, flags, fd, offset)?;
+
+        Ok(unsafe { core::slice::from_raw_parts_mut(addr as *mut u8, size) })
+    }
+
+    fn thread_id(&self) -> Result<usize> {
+        //static OFFSET: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
+        //Ok(syscall!(SYS_gettid)? + OFFSET.fetch_add(1, core::sync::atomic::Ordering::SeqCst))
+        syscall!(SYS_gettid)
     }
 }
 

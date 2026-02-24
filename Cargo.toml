@@ -25,6 +25,8 @@ edition.workspace = true
 picolibc-sys.workspace = true
 picolibc-macros.workspace = true
 libc_alloc = { version = "1.0.7" }
+spin = { version = "0.10.0" }
+hashbrown = { version = "0.16.1" }
 
 # optional
 linux-syscall = { version = "1.2.0", optional = true }

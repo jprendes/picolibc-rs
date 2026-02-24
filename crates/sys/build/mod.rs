@@ -25,8 +25,11 @@ pub fn build(options: &[(&str, &str)]) -> Result<()> {
     let install_dir = out_dir.join("usr");
     let include_dir = install_dir.join("include");
 
-    cc.out_dir(&build_dir.join("obj"));
+    cc.out_dir(build_dir.join("obj"));
     cc.warnings_into_errors(true);
+
+    // Enable emulated TLS if supported so that we can implement thread-local storage in our host.
+    cc.flag_if_supported("-femulated-tls");
 
     println!("cargo:rerun-if-changed={}", src_dir.display());
 
@@ -61,7 +64,6 @@ pub fn build(options: &[(&str, &str)]) -> Result<()> {
 
     // Add stub files
     let stubs = glob::glob(&format!("{}/*.c", manifest_dir.join("stubs").display()))?
-        .into_iter()
         .collect::<Result<Vec<_>, _>>()?;
 
     for file in &stubs {

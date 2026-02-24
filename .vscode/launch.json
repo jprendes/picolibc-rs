@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug LLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/x86_64-unknown-none/debug/picolibc-demo",
+            "cwd": "${workspaceFolder}",
+            "args": []
+        },
+        {
+            "name": "Debug LLDB-MI",
+            "type": "lldb-mi",
+            "request": "launch",
+            "target": "${workspaceFolder}/target/x86_64-unknown-none/debug/picolibc-demo",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText"
+        },
+        {
+            "name": "Debug GDB",
+            "type": "gdb",
+            "request": "launch",
+            "target": "${workspaceFolder}/target/x86_64-unknown-none/debug/picolibc-demo",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText"
+        }
+    ]
+}

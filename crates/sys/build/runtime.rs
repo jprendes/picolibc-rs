@@ -24,6 +24,19 @@ impl Sandbox {
     }
 }
 
+fn assert_no_gpl(path: impl AsRef<str>) {
+    let path = path.as_ref();
+    if path.contains("printf-tests.c") {
+        panic!("File {path:?} should not be read during the build");
+    }
+    if path.contains("testcases.c") {
+        panic!("File {path:?} should not be read during the build");
+    }
+    if path.contains("GeneratePicolibcCrossFile.sh") {
+        panic!("File {path:?} should not be read during the build");
+    }
+}
+
 impl runtime::Runtime for Sandbox {
     fn print(&self, msg: &str) {
         println!("cargo:info={msg}");
@@ -62,6 +75,7 @@ impl runtime::Runtime for Sandbox {
         Ok(Path::new(path.as_ref()).exists())
     }
     fn read_file(&self, path: &OsPath) -> runtime::Result<Vec<u8>> {
+        assert_no_gpl(path);
         Ok(fs::read(path.as_ref())?)
     }
     fn write_file(&self, path: &OsPath, data: &[u8]) -> runtime::Result<()> {
@@ -99,6 +113,10 @@ impl runtime::Runtime for Sandbox {
             bail!("Unsupported command: {}", cmd.as_ref());
         }
 
+        for arg in args {
+            assert_no_gpl(arg);
+        }
+
         let output = self.compiler.to_command().args(args).output()?;
 
         let output = picomeson::runtime::RunCommandOutput {
@@ -106,12 +124,6 @@ impl runtime::Runtime for Sandbox {
             stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
             returncode: output.status.code().unwrap_or(-1) as i64,
         };
-
-        if output.returncode != 0 {
-            eprintln!("Command failed: {} {:?}", cmd.as_ref(), args);
-            eprintln!("stdout: {}", output.stdout);
-            eprintln!("stderr: {}", output.stderr);
-        }
 
         Ok(output)
     }

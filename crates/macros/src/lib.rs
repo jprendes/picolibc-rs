@@ -19,7 +19,7 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             const _: () = {
                 #[unsafe(no_mangle)]
-                fn rust_start() {
+                fn rust_main() -> ! {
                     #ident();
                     ::core::unreachable!();
                 }
@@ -31,7 +31,7 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             const _: () = {
                 #[unsafe(no_mangle)]
-                fn rust_start() {
+                fn rust_main() -> ! {
                     extern crate picolibc;
                     ::picolibc::process::Termination::report(#ident()).exit_process();
                 }
@@ -50,13 +50,10 @@ pub fn host(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let output = quote! {
         #host_static
-
         const _: () = {
             extern crate picolibc;
             #[unsafe(no_mangle)]
-            fn _get_host() -> &'static dyn picolibc::host::Host {
-                &#ident
-            }
+            static __HOST: &'static dyn picolibc::host::Host = &#ident;
         };
     };
 

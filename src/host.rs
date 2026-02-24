@@ -1,23 +1,22 @@
 use core::ffi::*;
-use core::ptr::null_mut;
+use core::ptr::{NonNull, null_mut};
 
+use crate::emutls::EmutlsControl;
 use crate::io::Errno;
 
+#[cfg(feature = "linux")]
 mod linux;
 
+#[cfg(feature = "linux")]
 pub use linux::LinuxHost;
 
-pub fn get_host() -> &'static dyn Host {
-    // This is not thread-safe, but it's ok because
-    // we currently don't support threads
-    static mut HOST: Option<&'static dyn Host> = None;
-
-    unsafe extern "Rust" {
-        fn _get_host() -> &'static dyn Host;
-    }
-
-    *unsafe { HOST }.get_or_insert_with(|| unsafe { _get_host() })
+unsafe extern "Rust" {
+    fn rust_main() -> !;
+    #[unsafe(no_mangle)]
+    pub(crate) safe static __HOST: &'static dyn Host;
 }
+
+pub(crate) use __HOST as HOST;
 
 pub enum SeekFrom {
     Start(u64),
@@ -37,7 +36,7 @@ pub enum Clock {
 
 type Result<T> = core::result::Result<T, Errno>;
 
-pub trait Host {
+pub trait Host: Sync {
     #![allow(unused_variables)]
 
     fn read(&self, fd: c_int, buf: &mut [u8]) -> Result<usize> {
@@ -56,18 +55,22 @@ pub trait Host {
         Ok(Timespec { sec: 0, nsec: 0 })
     }
     fn exit(&self, ec: c_int) -> ! {
+        #[allow(clippy::empty_loop)]
         loop {}
     }
-    fn brk(&self, addr: *const ()) -> Result<*mut ()> {
-        Ok(null_mut())
+    fn mmap(&self, addr: *mut u8, size: usize) -> Result<&mut [u8]> {
+        Err(Errno::ENOMEM)
+    }
+    fn thread_id(&self) -> Result<usize> {
+        Ok(1)
     }
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> isize {
+extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> isize {
     let buf = unsafe { core::slice::from_raw_parts_mut(buf as *mut u8, count) };
 
-    match get_host().read(fd, buf) {
+    match HOST.read(fd, buf) {
         Ok(b) => b as isize,
         Err(err) => {
             err.set_errno();
@@ -77,10 +80,10 @@ pub extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> isize {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> isize {
+extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> isize {
     let buf = unsafe { core::slice::from_raw_parts(buf as *const u8, count) };
 
-    match get_host().write(fd, buf) {
+    match HOST.write(fd, buf) {
         Ok(b) => b as isize,
         Err(err) => {
             err.set_errno();
@@ -90,7 +93,7 @@ pub extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> isize {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn clock_gettime(
+extern "C" fn clock_gettime(
     clock: picolibc_sys::clockid_t,
     ts: *mut picolibc_sys::timespec,
 ) -> c_int {
@@ -109,7 +112,7 @@ pub extern "C" fn clock_gettime(
         }
     };
 
-    match get_host().gettime(clock) {
+    match HOST.gettime(clock) {
         Ok(t) => {
             ts.tv_sec = t.sec;
             ts.tv_nsec = t.nsec as _;
@@ -123,12 +126,12 @@ pub extern "C" fn clock_gettime(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn _exit(ec: c_int) -> ! {
-    get_host().exit(ec);
+extern "C" fn _exit(ec: c_int) -> ! {
+    HOST.exit(ec);
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
+extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
     let offset = match whence as u32 {
         picolibc_sys::SEEK_SET => SeekFrom::Start(offset as u64),
         picolibc_sys::SEEK_CUR => SeekFrom::Current(offset),
@@ -139,7 +142,7 @@ pub extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
         }
     };
 
-    match get_host().lseek(fd, offset) {
+    match HOST.lseek(fd, offset) {
         Ok(n) => n as c_long,
         Err(err) => {
             err.set_errno();
@@ -149,8 +152,8 @@ pub extern "C" fn lseek(fd: c_int, offset: c_long, whence: c_int) -> c_long {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn close(fd: c_int) -> c_int {
-    match get_host().close(fd) {
+extern "C" fn close(fd: c_int) -> c_int {
+    match HOST.close(fd) {
         Ok(()) => 0,
         Err(err) => {
             err.set_errno();
@@ -160,12 +163,24 @@ pub extern "C" fn close(fd: c_int) -> c_int {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn _brk(addr: *const ()) -> *mut () {
-    match get_host().brk(addr) {
-        Ok(a) => a,
+extern "C" fn _mmap(addr: *mut u8, size: usize) -> *mut u8 {
+    match HOST.mmap(addr, size) {
+        Ok(ptr) => ptr.as_mut_ptr(),
         Err(err) => {
             err.set_errno();
             null_mut()
         }
     }
+}
+
+#[unsafe(no_mangle)]
+extern "C" fn rust_start() -> ! {
+    unsafe {
+        rust_main();
+    }
+}
+
+#[unsafe(no_mangle)]
+extern "C" fn __tls_get_address(control: &EmutlsControl<u8>) -> NonNull<u8> {
+    control.get().into()
 }

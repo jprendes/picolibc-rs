@@ -22,7 +22,7 @@ const OPTIONS: &[(&str, &str)] = &[
     ("io-wchar", "true"),
     ("posix-console", "true"),
     ("freestanding", "true"),
-    ("picolib", "false"), // disabled as we implement our own sbrk
+    ("picolib", "false"), // disabled as we implement our own sbrk and tls
     ("specsdir", "spec"),
 ];
 
