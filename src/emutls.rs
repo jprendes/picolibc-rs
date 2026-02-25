@@ -13,8 +13,6 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use hashbrown::HashMap;
 use spin::{Lazy, RwLock};
 
-use crate::host::HOST;
-
 /// Control structure for an emulated TLS variable.
 ///
 /// This matches the ABI expected by LLVM's `__emutls_get_address`.
@@ -53,11 +51,9 @@ impl<T> EmutlsControl<T> {
     ///
     /// This function is called by the compiler-generated code to get the address
     /// of a thread-local variable. It handles lazy allocation and initialization.
-    pub(crate) fn get(&self) -> &'static T {
+    pub(crate) fn get(&self, thread_id: usize) -> &'static T {
         // Get the index for this control, allocating it if necessary.
         let index = self.get_index();
-
-        let thread_id = HOST.thread_id().expect("TLS not supported");
 
         let address_array = TlsAddressArray::get_for_thread(thread_id);
 

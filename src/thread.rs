@@ -62,7 +62,16 @@ impl<T: 'static> LocalKey<T> {
     /// The provided closure is called with a reference to the value.
     /// This is the main entry point for accessing thread-local variables.
     pub fn with<R>(&'static self, f: impl FnOnce(&T) -> R) -> R {
-        let value_ref = self.inner.get().get_or_init(&self.init);
+        unsafe extern "C" {
+            fn __emutls_get_address(control: *const EmutlsControl<u8>) -> *const State<u8>;
+        }
+        let state = unsafe {
+            __emutls_get_address(&raw const self.inner as _)
+                .cast::<State<T>>()
+                .as_ref()
+                .unwrap()
+        };
+        let value_ref = state.get_or_init(&self.init);
         f(value_ref)
     }
 

@@ -22,7 +22,7 @@ impl Host for LinuxHost {
     fn read(&self, fd: c_int, buf: &mut [u8]) -> Result<usize> {
         // Only stdin (fd=0)
         if fd != 0 {
-            return Ok(0);
+            return Err(Errno::EBADF);
         }
 
         syscall!(SYS_read, fd, buf.as_mut_ptr(), buf.len())
@@ -31,13 +31,13 @@ impl Host for LinuxHost {
     fn write(&self, fd: c_int, buf: &[u8]) -> Result<usize> {
         // Only stdout (fd=1) and stderr (fd=2)
         if fd != 1 && fd != 2 {
-            return Ok(buf.len());
+            return Err(Errno::EBADF);
         }
 
         syscall!(SYS_write, fd, buf.as_ptr(), buf.len())
     }
 
-    fn gettime(&self, clock: Clock) -> Result<Timespec> {
+    fn get_time(&self, clock: Clock) -> Result<Timespec> {
         const CLOCK_REALTIME: c_ulong = 0;
         const CLOCK_MONOTONIC: c_ulong = 1;
 
@@ -74,8 +74,6 @@ impl Host for LinuxHost {
     }
 
     fn thread_id(&self) -> Result<usize> {
-        //static OFFSET: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
-        //Ok(syscall!(SYS_gettid)? + OFFSET.fetch_add(1, core::sync::atomic::Ordering::SeqCst))
         syscall!(SYS_gettid)
     }
 }
