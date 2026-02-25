@@ -75,7 +75,7 @@ impl<T: 'static> LocalKey<T> {
         f(value_ref)
     }
 
-    /// Accesses the thread-local value, initilizing it if necessary.
+    /// Accesses the thread-local value, initializing it if necessary.
     /// The provided closure is called with a reference to the value.
     /// Returns Err(AccessError) if the key has been destroyed for this thread.
     pub fn try_with<R>(&'static self, f: impl FnOnce(&T) -> R) -> Result<R, AccessError> {

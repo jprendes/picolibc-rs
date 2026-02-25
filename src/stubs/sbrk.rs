@@ -100,7 +100,7 @@ extern "C" fn sbrk(incr: isize) -> *mut c_void {
     if incr < 0 {
         let neg_incr = (-incr) as usize;
         if brk.brk - neg_incr < brk.brk_start {
-            // Requested a shrink beyond the current mmaped region
+            // Requested a shrink beyond the current mmap-ed region
             Errno::ENOMEM.set_errno();
             return (-1isize) as *mut c_void;
         }
