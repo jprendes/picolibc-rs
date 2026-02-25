@@ -143,25 +143,25 @@ impl SubAssign<Duration> for SystemTime {
 
 impl PartialOrd for SystemTime {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.inner.tv_sec < other.inner.tv_sec {
-            return Some(Ordering::Less);
-        }
-        if self.inner.tv_sec > other.inner.tv_sec {
-            return Some(Ordering::Greater);
-        }
-        if self.inner.tv_nsec < other.inner.tv_nsec {
-            return Some(Ordering::Less);
-        }
-        if self.inner.tv_nsec > other.inner.tv_nsec {
-            return Some(Ordering::Greater);
-        }
-        Some(Ordering::Equal)
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for SystemTime {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        if self.inner.tv_sec < other.inner.tv_sec {
+            return Ordering::Less;
+        }
+        if self.inner.tv_sec > other.inner.tv_sec {
+            return Ordering::Greater;
+        }
+        if self.inner.tv_nsec < other.inner.tv_nsec {
+            return Ordering::Less;
+        }
+        if self.inner.tv_nsec > other.inner.tv_nsec {
+            return Ordering::Greater;
+        }
+        Ordering::Equal
     }
 }
 
@@ -179,7 +179,7 @@ impl Display for SystemTime {
         if res.is_null() {
             return write!(f, "Invalid time");
         }
-        let c_str = unsafe { core::ffi::CStr::from_bytes_until_nul(&buffer) }.unwrap();
+        let c_str = core::ffi::CStr::from_bytes_until_nul(&buffer).unwrap();
         let str_slice = c_str.to_str().unwrap_or("Invalid time");
         let str_slice = str_slice.trim_end(); // remove the trailing newline
         write!(f, "{}", str_slice)
