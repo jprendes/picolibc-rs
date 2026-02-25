@@ -21,6 +21,8 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         target: x86_64-unknown-none
+        # Don't override RUSTFLAGS so .cargo/config.toml is used
+        rustflags: ""
     - uses: Swatinem/rust-cache@v2
     - name: Initialize submodules
       shell: bash
@@ -44,11 +46,11 @@ jobs:
       - uses: extractions/setup-just@v3
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
+          toolchain: nightly, stable
           components: rustfmt, clippy
           target: x86_64-unknown-none
-      - name: Setup nightly toolchain
-        shell: bash
-        run: rustup toolchain install nightly --component rustfmt # needed to run rustfmt in nightly toolchain
+          # Don't override RUSTFLAGS so .cargo/config.toml is used
+          rustflags: ""
       - name: Check formatting
         shell: bash
         run: just fmt

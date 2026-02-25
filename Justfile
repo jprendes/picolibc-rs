@@ -1,13 +1,16 @@
-init-submodule:
+@init-submodule:
     test -f crates/sys/picolibc/COPYING.picolibc || ( \
         git submodule update --init && \
         git -C crates/sys/picolibc sparse-checkout init --no-cone && \
         git -C crates/sys/picolibc sparse-checkout set '**' '!test/**' '!scripts/**' '!COPYING.GPL2' )
 
-run: init-submodule
+build: init-submodule
+    cargo build -p picolibc-demo
+
+run: build
     cargo run -p picolibc-demo
 
-clippy:
+clippy: init-submodule
     cargo clippy --workspace -- -D warnings
 
 fmt:

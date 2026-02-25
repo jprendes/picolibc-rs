@@ -8,7 +8,7 @@ rustflags = [
 
 [profile.dev]
 panic = "abort"
-split-debuginfo = "packed"
+split-debuginfo = "off"
 
 [profile.release]
 panic = "abort"
