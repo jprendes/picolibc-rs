@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  run-demo:
+    name: Run demo
+    runs-on: "ubuntu-latest"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: extractions/setup-just@v3
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        target: x86_64-unknown-none
+    - uses: Swatinem/rust-cache@v2
+    - name: Initialize submodules
+      shell: bash
+      run: just init-submodule
+    - name: Run demo
+      shell: bash
+      run: just run
+
+  spelling:
+    name: Spell check with typos
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: crate-ci/typos@master
+  
+  check:
+    name: Lint
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+          target: x86_64-unknown-none
+      - name: Setup nightly toolchain
+        shell: bash
+        run: rustup toolchain install nightly --component rustfmt # needed to run rustfmt in nightly toolchain
+      - name: Check formatting
+        shell: bash
+        run: just fmt
+      - name: Check clippy
+        shell: bash
+        run: just clippy

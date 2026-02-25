@@ -1,0 +1,5 @@
+[files]
+extend-exclude = [
+   # exclude git (sub)modules and generated content
+   "crates/sys/picolibc",
+]
