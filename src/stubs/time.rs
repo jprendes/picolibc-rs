@@ -1,8 +1,7 @@
 use core::ffi::*;
 
-use crate::io::Errno;
-
 use crate::host::{Clock, HOST};
+use crate::io::Errno;
 
 #[unsafe(no_mangle)]
 extern "C" fn clock_gettime(

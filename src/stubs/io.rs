@@ -1,8 +1,7 @@
 use core::ffi::*;
 
+use crate::host::{SeekFrom, HOST};
 use crate::io::Errno;
-
-use crate::host::{HOST, SeekFrom};
 
 #[unsafe(no_mangle)]
 extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> isize {

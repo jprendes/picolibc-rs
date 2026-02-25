@@ -4,9 +4,8 @@ use linux_syscall::{
     SYS_clock_gettime, SYS_exit, SYS_exit_group, SYS_gettid, SYS_mmap, SYS_read, SYS_write,
 };
 
-use crate::io::Errno;
-
 use super::{Clock, Host, Result, Timespec};
+use crate::io::Errno;
 
 #[derive(Default)]
 pub struct LinuxHost;

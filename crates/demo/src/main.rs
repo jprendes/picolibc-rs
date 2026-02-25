@@ -8,8 +8,8 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 
 use picolibc::host::LinuxHost;
-use picolibc::{println, thread_local};
 use picolibc::time::SystemTime;
+use picolibc::{println, thread_local};
 
 #[picolibc::host]
 static HOST: LinuxHost = LinuxHost;

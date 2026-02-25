@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::host::{HOST, Result};
+use crate::host::{Result, HOST};
 use crate::io::Errno;
 
 const KIB: usize = 1024;
