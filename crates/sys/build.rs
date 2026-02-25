@@ -8,12 +8,17 @@ const OPTIONS: &[(&str, &str)] = &[
     ("format-default", "double"),
     ("posix-console", "false"),
     ("printf-aliases", "false"),
+    ("atomic-ungetc", "true"),
+    ("fast-bufio", "true"),
+    ("stdio-locking", "true"),
+    ("fast-strcmp", "true"),
     ("picocrt", "false"),
     ("initfini-array", "true"),
     ("single-thread", "false"),
-    ("stdio-locking", "true"),
     ("enable-malloc", "true"),
+    ("malloc-small-bucket", "1024"),
     ("thread-local-storage", "true"),
+    ("thread-local-storage-api", "false"),
     ("newlib-global-errno", "false"),
     ("errno-function", "__errno_location"),
     ("tests", "false"),
@@ -24,6 +29,7 @@ const OPTIONS: &[(&str, &str)] = &[
     ("freestanding", "true"),
     ("os-linux", "false"),
     ("specsdir", "spec"),
+    ("want-math-errno", "true"),
 ];
 
 fn main() -> Result<()> {
