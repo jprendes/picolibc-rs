@@ -5,13 +5,15 @@ extern crate alloc;
 pub mod process;
 
 mod allocator;
+mod emutls;
+mod panic;
+mod stubs;
 pub mod host;
 pub mod io;
-mod panic;
-mod emutls;
 pub mod thread;
-mod stubs;
+pub mod time;
 
 pub use picolibc_macros::{host, main};
+
 #[doc(hidden)]
 pub use picolibc_sys as sys;

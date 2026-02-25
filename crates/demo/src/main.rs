@@ -9,6 +9,7 @@ use core::cell::RefCell;
 
 use picolibc::host::LinuxHost;
 use picolibc::{println, thread_local};
+use picolibc::time::SystemTime;
 
 #[picolibc::host]
 static HOST: LinuxHost = LinuxHost;
@@ -19,6 +20,7 @@ fn main() {
 
     test_allocations();
     test_tls();
+    test_time();
 }
 
 /// Do a bunch of allocations to force the allocator to request
@@ -27,13 +29,15 @@ fn test_allocations() {
     // You can see the allocator's behavior by tracing calls to mmap with strace:
     // $ strace -e trace=mmap target/x86_64-unknown-none/debug/picolibc-demo
     let mut v = vec![];
+    let mut allocated = 0;
     for _ in 0..16 {
         // The allocator requests memory from the host in 64 KiB chunks,
         // You should see a first mmap call for the first 2 iterations,
         // another one for the next 4 iterations, and so on.
         let mut vec = Vec::with_capacity(31 * 1024);
         vec.extend([1u8, 2, 3, 4, 5]);
-        println!("Vector: {:?}", vec);
+        allocated += vec.capacity();
+        println!("Bytes allocated: 0x{allocated:x}");
         v.push(vec);
     }
 }
@@ -58,4 +62,9 @@ fn test_tls() {
     TLS_VAR.with_borrow(|v| {
         println!("TLS_VAR = {v:?}");
     });
+}
+
+fn test_time() {
+    let time = SystemTime::now();
+    println!("Current time: {time}");
 }
