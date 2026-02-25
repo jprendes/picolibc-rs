@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use anyhow::Context as _;
+use bindgen::RustEdition::Edition2024;
 
 pub fn generate(inc_path: &Path, out_path: &Path) -> anyhow::Result<()> {
     // inc path is <sysroot>/usr/include
@@ -12,6 +13,8 @@ pub fn generate(inc_path: &Path, out_path: &Path) -> anyhow::Result<()> {
 
     let mut bindings = bindgen::builder()
         .use_core()
+        .wrap_unsafe_ops(true)
+        .rust_edition(Edition2024)
         .derive_copy(true)
         .derive_debug(true)
         .derive_default(true)

@@ -4,7 +4,8 @@
     non_camel_case_types,
     non_upper_case_globals,
     unpredictable_function_pointer_comparisons,
-    clippy::approx_constant
+    clippy::approx_constant,
+    clippy::missing_safety_doc
 )]
 
 include!(concat!(env!("OUT_DIR"), "/picolibc.rs"));
